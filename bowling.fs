@@ -18,8 +18,9 @@ let rec score_game frame_number throws_to_score =
        let (n, rest_of_game) = (score_frame throws_to_score) in
         n + (score_game (frame_number + 1) rest_of_game)
 
-
-let bowl throwlist = score_game 0 throwlist
+let bowl throwlist = 
+  let padded_throwlist = throwlist @ zeros in 
+  score_game 0 throwlist
 
 ;;
 
