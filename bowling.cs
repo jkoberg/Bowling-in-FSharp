@@ -2,15 +2,15 @@
 using System;
 public class BowlingProgram {
 	public static Tuple<int, List<int>> score_frame( List<int> remaining_throws ) {
-		if( remaining_throws[0] == 10 && remaining_throws.Length >= 3) {
+		if( remaining_throws[0] == 10 && remaining_throws.Count >= 3) {
 			var score = 10 + remaining_throws[1] + remaining_throws[2];
 			return Tuple.Create(score, remaining_throws.Skip(1));
 			}
-		if( remaining_throws.Length >= 3 && remaining_throws[0]+remaining_throws[1] == 10) {
+		if( remaining_throws.Count >= 3 && remaining_throws[0]+remaining_throws[1] == 10) {
 			var score = 10 + remaining_throws[2];
 			return Tuple.Create(score, remaining_throws.Skip(2));
 			}
-		if( remaining_throws.Length >= 2) {
+		if( remaining_throws.Count >= 2) {
 			var score = remaining_throws[0]+remaining_throws[1];
 			return Tuple.Create(score, remaining_throws.Skip(2));
 			}
