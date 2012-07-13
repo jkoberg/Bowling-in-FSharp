@@ -1,41 +1,37 @@
-﻿module bowling
+module bowling
 
-type Roll = Roll of int
+type ThrowResult = Drop of int
 
-type FrameType =
-  | Strike
-  | Spare
-  | Normal
+type FrameType = Strike | Spare | Normal
 
-type ScoreResult =
-  | Frame of FrameType * int * list<Roll>
-  | RollAgain of list<Roll>
+type RollResult =
+  | ClosedFrame of FrameType * int * list<Roll>
+  | OpenFrame of list<Roll>
 
-type FrameResult = FrameResult of int * ScoreResult
+type Frame = Frame of int * FrameType * int
 
 type GameResult =
-  | FinishedGame of int * list<FrameResult>
-  | UnfinishedGame of string * list<FrameResult>
+  | FinishedGame of int * list<Frame>
+  | UnfinishedGame of string * list<Frame>
   
 
-let score nextrolls =
-  match nextrolls with
-  | Roll r1 :: (Roll b1 ::  Roll b2 :: _ as more)  when r1 = 10       -> Frame(Strike, 10 + b1 + b2, more)
-  | Roll r1 ::  Roll r2 :: (Roll b1 :: _ as more)  when r1 + r2 = 10  -> Frame(Spare, r1 + r2 + b1, more)
-  | Roll r1 ::  Roll r2 :: (_ as more)                                -> Frame(Normal, r1 + r2, more)
-  | ( _ as more)                                                      -> RollAgain(more)
+let score rolls =
+  match rolls with
+  | Drop 10 :: (Drop b1 ::  Drop b2 :: _ as upcoming)                   -> ClosedFrame(Strike, 10+b1+b2, upcoming)
+  | Drop r1 ::  Drop r2 :: (Drop b1 :: _ as upcoming)  when r1+r2 = 10  -> ClosedFrame(Spare,  r1+r2+b1, upcoming)
+  | Drop r1 ::  Drop r2 :: (_ as upcoming)                              -> ClosedFrame(Normal, r1+r2,    upcoming)
+  | (_ as upcoming)                                                     -> OpenFrame(upcoming)
   
+let rec gameloop total framecount results nextrolls =
+  if framecount >= 10 
+  then FinishedGame(total, List.rev results)
+  else match (score nextrolls) with
+       | OpenFrame(_)
+         -> UnfinishedGame("Ran out of rolls", List.rev results)
 
-let rec gameloop totalscore framenumber resultlist rollsleft =
-  let framenumber = framenumber + 1
-  if framenumber > 10 
-  then FinishedGame(totalscore, List.rev resultlist)
-  else match score rollsleft with
-       | RollAgain(unscored_rolls) -> UnfinishedGame("Ran out of rolls", List.rev resultlist)
-       | Frame(_, framescore, remainder) as result ->
-         let newscore = totalscore + framescore
-         let newresults = FrameResult(framenumber, result) :: resultlist
-         gameloop newscore framenumber newresults remainder
+       | ClosedFrame(type, score, nextrolls) as result
+         -> let result = Frame(framecount, type, score)
+            gameloop (total+score) (framecount+1) (result::results) nextrolls
 
 
 let bowling_game = gameloop 0 0 []
