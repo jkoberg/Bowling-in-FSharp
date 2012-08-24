@@ -2,13 +2,13 @@ module bowling
 
 type Throw = Drop of int
 
-type FrameType = Strike | Spare | Normal
+type FrameType = Strike | Spare | Open
 
 type Frame = Frame of int * FrameType * int
 
 type ThrowResult =
-  | ClosedFrame of FrameType * int * list<Throw>
-  | OpenFrame of list<Throw>
+  | CompletedFrame of FrameType * int * list<Throw>
+  | IncompleteFrame of list<Throw>
 
 type GameResult =
   | FinishedGame of int * list<Frame>
@@ -17,11 +17,10 @@ type GameResult =
 
 let score throws =
   match throws with
-  | Drop 10 :: (Drop b1 ::  Drop b2 :: _ as upcoming)                  -> ClosedFrame(Strike, 10+b1+b2, upcoming)
-  | Drop r1 ::  Drop r2 :: (Drop b1 :: _ as upcoming) when r1+r2 = 10  -> ClosedFrame(Spare,  r1+r2+b1, upcoming)
-  | Drop r1 ::  Drop r2 :: (_ as upcoming)                             -> ClosedFrame(Normal, r1+r2,    upcoming)
-  | (_ as upcoming)                                                    -> OpenFrame(upcoming)
-
+  | Drop 10 :: (Drop b1 ::  Drop b2 :: _ as upcoming)                  -> CompletedFrame(Strike, 10+b1+b2, upcoming)
+  | Drop r1 ::  Drop r2 :: (Drop b1 :: _ as upcoming) when r1+r2 = 10  -> CompletedFrame(Spare,  r1+r2+b1, upcoming)
+  | Drop r1 ::  Drop r2 :: (_ as upcoming)                             -> CompletedFrame(Open, r1+r2,    upcoming)
+  | (_ as upcoming)                                                    -> IncompleteFrame(upcoming)
 
 let rec gameloop framecount results throws =
   if framecount > 10 then
@@ -29,13 +28,11 @@ let rec gameloop framecount results throws =
     FinishedGame(total, List.rev results)
   else
     match (score throws) with
-       | OpenFrame(_)
+       | IncompleteFrame(_)
          -> UnfinishedGame("Ran out of throws", List.rev results)
-       | ClosedFrame(typ, score, upcoming)
+       | CompletedFrame(typ, score, upcoming)
          let result = Frame(framecount, typ, score)
          -> gameloop (framecount+1) (result::results) upcoming
 
 
 let score_bowling_game = gameloop 1 []
-
-
